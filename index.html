@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1F3AD1">
+<title>Bouncers — Team Portal</title>
+<link rel="icon" href="logo.png">
+<link rel="apple-touch-icon" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="config.js"></script>
+<style>
+:root{
+  --blue:#1F3AD1; --navy:#121C7A; --cream:#FBF5E3; --yellow:#F6EF9C; --gold:#F2C934;
+  --bg:var(--cream); --panel:#FFFDF6; --ink:#121C5E; --muted:#5D6491; --line:#E7E0C6;
+  --ok:#14A37F; --bad:#E5483B;
+  --radius:20px; --display:"Baloo 2","Plus Jakarta Sans",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{font-family:"Plus Jakarta Sans",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.55}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+h1,h2,h3,.display{font-family:var(--display)}
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+/* sidebar */
+aside{background:var(--blue);color:var(--cream);padding:22px 14px 0;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh;overflow:hidden}
+.brand{display:flex;flex-direction:column;align-items:center;gap:6px;padding:0 0 18px}
+.brand img{width:96px;height:96px;transition:transform .3s cubic-bezier(.3,1.6,.5,1)}
+.brand img:hover{transform:translateY(-6px) rotate(-6deg)}
+nav{display:flex;flex-direction:column;gap:4px}
+nav a{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:999px;color:var(--cream);text-decoration:none;font-family:var(--display);font-weight:600;font-size:16px;opacity:.85}
+nav a:hover{background:rgba(255,255,255,.1);opacity:1}
+nav a.active{background:var(--yellow);color:var(--blue);opacity:1}
+nav a svg{width:20px;height:20px;flex:none}
+.side-bottom{margin-top:auto;display:flex;flex-direction:column;gap:8px;position:relative;z-index:1;padding-bottom:12px}
+.viewas{padding:10px 12px;border-radius:16px;background:var(--navy)}
+.viewas label{display:block;font-size:12px;opacity:.75;margin-bottom:4px}
+.viewas select{width:100%;background:var(--cream);border:0;color:var(--blue);border-radius:999px;padding:7px 12px;font-weight:600}
+.me{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:16px;background:var(--navy);font-size:13px}
+.me button{margin-inline-start:auto;background:none;border:1px solid rgba(251,245,227,.5);color:var(--cream);border-radius:999px;padding:2px 10px;font-size:12px}
+.waves{position:absolute;bottom:0;left:0;right:0;height:120px;opacity:.9;pointer-events:none}
+/* main */
+main{padding:28px 34px 90px;min-width:0;position:relative}
+main::before{content:"";position:absolute;top:0;right:0;width:150px;height:110px;pointer-events:none;
+  background:conic-gradient(var(--blue) 25%,transparent 0 50%,var(--blue) 0 75%,transparent 0) 0 0/22px 22px;
+  -webkit-mask:radial-gradient(120% 120% at 100% 0,#000 45%,transparent 46%);mask:radial-gradient(120% 120% at 100% 0,#000 45%,transparent 46%);opacity:.9}
+.topbar{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:22px;flex-wrap:wrap;position:relative}
+h1{font-size:34px;margin:0;line-height:1.15;color:var(--blue);font-weight:800;display:inline-block;position:relative;padding-bottom:6px}
+h1::after{content:"";position:absolute;left:0;right:20%;bottom:0;height:7px;border-radius:9px;background:var(--gold);transform:rotate(-1deg)}
+.spark{display:inline-block;width:22px;height:22px;color:var(--gold);margin-inline-start:8px;vertical-align:top}
+.sub{color:var(--muted);font-size:13px}
+.btn{border:2px solid var(--blue);background:transparent;color:var(--blue);border-radius:999px;padding:7px 16px;font-weight:700;font-family:var(--display);font-size:15px;transition:transform .15s}
+.btn:hover{transform:translateY(-2px)}
+.btn:active{transform:translateY(0) scale(.97)}
+.btn.primary{background:var(--blue);color:var(--cream)}
+.btn.yellow{background:var(--yellow);border-color:var(--yellow);color:var(--blue)}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn.sm{padding:3px 12px;font-size:13px;border-width:1.5px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.filters select,.filters input{border:1.5px solid var(--line);background:var(--panel);border-radius:999px;padding:8px 14px;min-width:140px;color:var(--ink)}
+.filters select:focus,.filters input:focus{outline:2px solid var(--blue);border-color:transparent}
+.banner{padding:10px 16px;border-radius:16px;background:var(--yellow);margin-bottom:16px;font-size:13px;color:var(--navy)}
+.banner.err{background:#fde3df;color:#8b1d12}
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.stat{background:var(--panel);border-radius:var(--radius);padding:18px 20px;border:2px solid var(--blue);position:relative;overflow:hidden}
+.stat .n{font-family:var(--display);font-size:44px;font-weight:800;line-height:1;color:var(--blue)}
+.stat .l{font-weight:600;margin-top:4px}
+.stat.s1{background:var(--blue);color:var(--cream)} .stat.s1 .n{color:var(--yellow)}
+.stat.s2{background:var(--yellow);border-color:var(--yellow)} .stat.s2 .n{color:var(--bad)}
+.stat.s1::after{content:"";position:absolute;right:-30px;bottom:-30px;width:90px;height:90px;border-radius:50%;background:rgba(246,239,156,.15)}
+.grid2{display:grid;grid-template-columns:1.1fr 1fr;gap:16px}
+.card{background:var(--panel);border-radius:var(--radius);border:1.5px solid var(--line);padding:18px 20px}
+.card h3{margin:0 0 12px;font-size:20px;color:var(--blue)}
+.load-row{display:grid;grid-template-columns:130px 1fr 40px;gap:10px;align-items:center;margin-bottom:12px}
+.bar{height:14px;background:#F1EBD2;border-radius:99px;overflow:hidden;display:flex}
+.bar span{display:block;height:100%}
+.list-item{display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1.5px dashed var(--line);cursor:pointer;border-radius:10px}
+.list-item:hover{background:#F8F1D8}
+.list-item:last-child{border-bottom:0}
+.dot{width:12px;height:12px;border-radius:50%;flex:none}
+.grow{flex:1;min-width:0}
+.ellip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;padding:1px 10px;border-radius:999px;border:1.5px solid currentColor;color:var(--blue);white-space:nowrap;font-weight:600}
+.pill.soft{border-color:transparent;background:#F1EBD2;color:var(--ink)}
+.pill.urgent{color:var(--bad)} .pill.high{color:#B07F00}
+.pill.late{background:var(--bad);border-color:var(--bad);color:#fff}
+.empty{color:var(--muted);text-align:center;padding:24px 10px;font-size:13px}
+/* kanban */
+.board{display:grid;grid-template-columns:repeat(4,minmax(250px,1fr));gap:14px;overflow-x:auto;padding-bottom:6px}
+.col{background:#F3ECCF;border-radius:var(--radius);padding:10px;min-height:340px;display:flex;flex-direction:column;gap:9px}
+.col.over{outline:3px dashed var(--blue);outline-offset:-5px}
+.col-h{display:flex;align-items:center;justify-content:space-between;padding:4px 8px 6px;font-family:var(--display);font-weight:700;font-size:17px;color:var(--blue)}
+.col-h .c{background:var(--blue);color:var(--cream);border-radius:99px;padding:0 10px;font-size:13px}
+.col[data-col=done] .col-h .c{background:var(--ok)}
+.tcard{background:var(--panel);border-radius:16px;padding:11px 13px;border:1.5px solid var(--line);border-left:6px solid var(--c,#ccc);cursor:grab;transition:transform .15s,box-shadow .15s}
+.tcard:hover{transform:translateY(-2px) rotate(-.4deg);box-shadow:0 6px 0 rgba(31,58,209,.12)}
+.tcard.dragging{opacity:.4}
+.tcard .t{font-weight:700;margin-bottom:6px}
+.tcard .meta{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.tcard .foot{display:flex;justify-content:space-between;align-items:center;margin-top:9px;font-size:12px;color:var(--muted)}
+.avatar{width:26px;height:26px;border-radius:50%;display:inline-grid;place-items:center;font-size:11px;font-weight:700;color:#fff;flex:none;font-family:var(--display);border:2px solid var(--panel)}
+.next{white-space:nowrap;border:0;background:var(--yellow);color:var(--blue);border-radius:99px;padding:1px 10px;font-size:12px;font-weight:700}
+/* calendar */
+.cal-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cal-head h2{margin:0 6px;font-size:24px;min-width:150px;text-align:center;color:var(--blue)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:14px}
+.cal .dn{font-size:13px;color:var(--blue);text-align:center;font-weight:700;padding:4px;font-family:var(--display)}
+.day{background:var(--panel);border:1.5px solid var(--line);border-radius:14px;min-height:116px;padding:6px;display:flex;flex-direction:column;gap:3px;cursor:pointer;min-width:0}
+.day:hover{border-color:var(--blue)}
+.day.out{opacity:.4}
+.day.today{background:var(--yellow);border-color:var(--yellow)}
+.day .num{font-size:13px;font-weight:800;color:var(--muted);font-family:var(--display)}
+.day.today .num{color:var(--blue)}
+.chip{font-size:11px;padding:2px 7px;border-radius:8px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;font-weight:600}
+.chip.done{opacity:.4;text-decoration:line-through}
+.more{font-size:11px;color:var(--muted)}
+/* entity cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px}
+.ent{background:var(--panel);border:1.5px solid var(--line);border-radius:var(--radius);padding:18px;position:relative;overflow:hidden}
+.ent::before{content:"";position:absolute;top:-40px;right:-40px;width:110px;height:110px;border-radius:50%;background:var(--c,#ccc);opacity:.16}
+.ent h3{margin:0;font-size:21px;color:var(--blue)}
+.ent .row{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;margin-top:7px}
+.ent .row b{color:var(--ink)}
+.ent .acts{display:flex;gap:6px;margin-top:14px;flex-wrap:wrap}
+.tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.big-av{width:52px;height:52px;font-size:19px}
+.section-t{font-family:var(--display);color:var(--blue);font-size:20px;margin:26px 0 10px}
+/* modal */
+.modal-bg{position:fixed;inset:0;background:rgba(18,28,122,.45);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal-bg.open{display:flex}
+.modal{background:var(--cream);border-radius:24px;width:min(580px,100%);max-height:92vh;overflow:auto;padding:22px 24px;border:3px solid var(--blue);box-shadow:8px 8px 0 var(--blue)}
+.modal h2{margin:0 0 14px;font-size:24px;color:var(--blue)}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form .full{grid-column:1/-1}
+.form label{display:block;font-size:12.5px;color:var(--blue);margin-bottom:4px;font-weight:700}
+.form input,.form select,.form textarea{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:9px 11px;background:#fff}
+.form input:focus,.form select:focus,.form textarea:focus{outline:2px solid var(--blue);border-color:transparent}
+.form textarea{min-height:76px;resize:vertical}
+.swatches{display:flex;gap:7px;flex-wrap:wrap}
+.swatches button{width:28px;height:28px;border-radius:50%;border:3px solid transparent}
+.swatches button.sel{border-color:var(--cream);box-shadow:0 0 0 2px var(--blue)}
+.checks{display:flex;flex-wrap:wrap;gap:6px}
+.checks label{display:flex;align-items:center;gap:5px;border:1.5px solid var(--line);background:#fff;border-radius:99px;padding:4px 11px;font-weight:600;color:var(--ink);margin:0;cursor:pointer}
+.modal-foot{display:flex;justify-content:space-between;gap:8px;margin-top:18px;flex-wrap:wrap}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--blue);color:var(--cream);padding:10px 18px;border-radius:99px;font-weight:600;opacity:0;transition:.25s cubic-bezier(.3,1.6,.5,1);pointer-events:none;z-index:60}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.loading{padding:80px;text-align:center;color:var(--muted)}
+.loading img{width:90px;animation:bounce 1s cubic-bezier(.3,1.6,.5,1) infinite alternate}
+@keyframes bounce{to{transform:translateY(-18px)}}
+/* auth */
+.auth{min-height:100vh;display:grid;place-items:center;padding:20px;background:var(--blue);position:relative;overflow:hidden}
+.auth-box{background:var(--cream);border-radius:28px;padding:28px;width:min(400px,100%);text-align:center;position:relative;z-index:1;box-shadow:10px 10px 0 var(--navy)}
+.auth-box img{width:120px;margin-top:-80px;filter:drop-shadow(0 6px 0 var(--navy))}
+.auth-box h2{color:var(--blue);margin:8px 0 4px;font-size:26px}
+.auth-box .form{grid-template-columns:1fr;text-align:left;margin-top:16px}
+.auth-tabs{display:flex;gap:6px;justify-content:center;margin-top:10px}
+.auth .waves{height:200px}
+@media (max-width:900px){
+  .app{grid-template-columns:1fr}
+  aside{position:fixed;bottom:0;top:auto;height:auto;width:100%;flex-direction:row;padding:6px;z-index:40;border-radius:22px 22px 0 0}
+  .brand,.side-bottom,aside .waves{display:none}
+  nav{flex-direction:row;width:100%;justify-content:space-around}
+  nav a{flex-direction:column;gap:0;font-size:12px;padding:6px 10px;border-radius:14px}
+  main{padding:18px 14px 100px}
+  main::before{display:none}
+  h1{font-size:28px}
+  .stats{grid-template-columns:1fr 1fr}
+  .stat .n{font-size:34px}
+  .grid2,.form{grid-template-columns:1fr}
+  .day{min-height:68px}
+  .chip{font-size:10px}
+  .mobile-bar{display:flex!important}
+}
+.mobile-bar{display:none;gap:8px;align-items:center;margin-bottom:14px}
+.mobile-bar img{width:44px}
+.mobile-bar select{flex:1;border:1.5px solid var(--line);border-radius:99px;padding:7px 12px;background:var(--panel)}
+</style>
+</head>
+<body>
+<div id="root"><div class="loading"><img src="logo.png" alt=""><div>Loading...</div></div></div>
+<div class="modal-bg" id="modalBg"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ================= constants =================
+const STATUSES=[["todo","To do"],["doing","In progress"],["review","Review"],["done","Delivered"]];
+const STATUS_NAME=Object.fromEntries(STATUSES);
+const TYPES=["Post","Reel","Story","Design","Caption","Shooting","Editing","Paid ad","Report","Packaging","Event","Branding","Other"];
+const PLATFORMS=["Instagram","Facebook","TikTok","Snapchat","YouTube","LinkedIn","X"];
+const PRIORITIES=[["normal","Normal"],["high","High"],["urgent","Urgent"]];
+const PRIO_NAME=Object.fromEntries(PRIORITIES);
+const ROLES=["Team Leader","Account Manager","Designer","Content Creator","Reel Creator","Copywriter","Video Editor","Media Buyer","Photographer","CEO"];
+const COLORS=["#1F3AD1","#F2C934","#E5483B","#14A37F","#E64980","#7B4DE0","#0FA3B1","#121C7A","#F28C28","#5B8DEF"];
+const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+const DAYS=["Sat","Sun","Mon","Tue","Wed","Thu","Fri"];
+const LOGO="logo.png";
+const SPARK='<svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c.8 6.5 5.5 11.2 12 12-6.5.8-11.2 5.5-12 12-.8-6.5-5.5-11.2-12-12C6.5 11.2 11.2 6.5 12 0z"/></svg>';
+const WAVES='<svg class="waves" viewBox="0 0 240 120" preserveAspectRatio="none"><g fill="none" stroke-width="10">'+[0,1,2,3,4].map(i=>`<path d="M-10 ${30+i*20} C 40 ${10+i*20}, 80 ${50+i*20}, 130 ${30+i*20} S 220 ${10+i*20}, 260 ${30+i*20}" stroke="${i%2?"#FBF5E3":"#F6EF9C"}" opacity="${i%2?.35:.9}"/>`).join("")+'</g></svg>';
+const ICONS={
+ dashboard:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="3" width="7" height="9" rx="2.5"/><rect x="14" y="3" width="7" height="5" rx="2.5"/><rect x="14" y="12" width="7" height="9" rx="2.5"/><rect x="3" y="16" width="7" height="5" rx="2.5"/></svg>',
+ tasks:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="5" height="16" rx="2.5"/><rect x="10" y="4" width="5" height="11" rx="2.5"/><rect x="17" y="4" width="4" height="7" rx="2"/></svg>',
+ calendar:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="4"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+ clients:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M12 2.5l2.6 6 6.4.5-4.9 4.2 1.5 6.3L12 16.2l-5.6 3.3 1.5-6.3L3 9l6.4-.5z"/></svg>',
+ team:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14c2.3 0 4 1.5 4.5 4"/></svg>'
+};
+const PAGES=[["dashboard","Home"],["tasks","Tasks"],["calendar","Calendar"],["clients","Clients"],["team","Team"]];
+
+// ================= state =================
+const S={clients:[],team:[],pending:[],tasks:[],mode:"loading",backend:null,readOnly:false,isAdmin:true,me:null,
+  viewAs:"all",fClient:"all",fEmp:"all",q:"",calY:null,calM:null,authTab:"login",slow:false,err:null};
+try{S.viewAs=localStorage.getItem("b_viewas")||"all"}catch(e){}
+
+// ================= helpers =================
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad=n=>String(n).padStart(2,"0");
+const ymd=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const today=()=>ymd(new Date());
+const addDays=(s,n)=>{const d=new Date(s+"T00:00:00");d.setDate(d.getDate()+n);return ymd(d)};
+const fmtDate=s=>{if(!s)return"";const d=new Date(s+"T00:00:00");return MONTHS[d.getMonth()].slice(0,3)+" "+d.getDate()};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const client=id=>S.clients.find(c=>c.id===id);
+const emp=id=>S.team.find(e=>e.id===id);
+const initials=n=>(n||"?").trim().split(/\s+/).map(w=>w[0]).slice(0,2).join("");
+const isLate=t=>t.status!=="done"&&t.due&&t.due<today();
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove("show"),2400)}
+function avatar(e,cls=""){if(!e)return'<span class="avatar" style="background:#bbb">?</span>';return`<span class="avatar ${cls}" title="${esc(e.name)}" style="background:${esc(e.color||"#888")}">${esc(initials(e.name))}</span>`}
+const lockedToMe=()=>S.backend==="supabase"&&!S.isAdmin;
+const effViewAs=()=>lockedToMe()?S.me?.id:S.viewAs;
+
+// ================= backends =================
+const CFG=window.BOUNCERS_CONFIG||{};
+let sb=null,cdb=null;
+const B={
+  async save(col,obj){
+    if(S.readOnly){toast("You don't have edit access");return false}
+    try{
+      if(S.backend==="supabase"){
+        const row=toDb(col,obj);
+        const {error}=col==="team"?await sb.from("profiles").update(row).eq("id",obj.id):await sb.from(col).upsert(row);
+        if(error)throw error; await sbReload();
+      }else if(S.backend==="claude"){
+        const {id,...body}=obj; await cdb.collection(col).doc(id).set(JSON.parse(JSON.stringify(body)));
+      }else{
+        const arr=S[col],i=arr.findIndex(x=>x.id===obj.id);if(i>=0)arr[i]={...obj};else arr.push({...obj});localSave();render();
+      }
+      return true;
+    }catch(e){return writeErr(e)}
+  },
+  async remove(col,id){
+    try{
+      if(S.backend==="supabase"){
+        if(col==="team"){const {error}=await sb.from("profiles").update({approved:false}).eq("id",id);if(error)throw error}
+        else{const {error}=await sb.from(col).delete().eq("id",id);if(error)throw error}
+        await sbReload();
+      }else if(S.backend==="claude")await cdb.collection(col).doc(id).delete();
+      else{S[col]=S[col].filter(x=>x.id!==id);localSave();render()}
+      return true;
+    }catch(e){return writeErr(e)}
+  }
+};
+function writeErr(e){
+  console.error(e);
+  if(e&&(e.code==="invalid_argument"||e.code==="42501"||/row-level security|permission/i.test(e.message||""))){toast("You don't have permission to do that")}
+  else if(e&&e.code==="quota_exceeded")toast("Storage is full — delete some old items");
+  else toast("Couldn't save — please try again");
+  return false;
+}
+// ---- supabase ----
+function toDb(col,o){
+  if(col==="tasks")return{id:o.id,title:o.title,client:o.client||null,assignee:o.assignee||null,type:o.type||null,platform:o.platform||null,
+    due:o.due||null,priority:o.priority||"normal",status:o.status||"todo",notes:o.notes||null,done_at:o.doneAt||null,updated_at:new Date().toISOString()};
+  if(col==="clients")return{id:o.id,name:o.name,package:o.package||null,manager:o.manager||null,platforms:o.platforms||[],color:o.color,notes:o.notes||null};
+  if(col==="team")return{id:o.id,name:o.name,role:o.role||null,color:o.color,is_admin:!!o.isAdmin,approved:o.approved!==false};
+}
+function fromDb(col,r){
+  if(col==="tasks")return{...r,doneAt:r.done_at,due:r.due||""};
+  if(col==="profiles")return{id:r.id,name:r.name||r.email,email:r.email,role:r.role,color:r.color||"#1F3AD1",isAdmin:r.is_admin,approved:r.approved};
+  return r;
+}
+async function sbReload(){
+  const [p,c,t]=await Promise.all([sb.from("profiles").select("*").order("name"),sb.from("clients").select("*").order("name"),sb.from("tasks").select("*")]);
+  if(p.error||c.error||t.error){S.err="load";render();return}
+  const profs=p.data.map(r=>fromDb("profiles",r));
+  S.me=profs.find(x=>x.id===S.uid)||S.me;
+  S.team=profs.filter(x=>x.approved);S.pending=profs.filter(x=>!x.approved);
+  S.clients=c.data;S.tasks=t.data.map(r=>fromDb("tasks",r));
+  S.isAdmin=!!(S.me&&S.me.isAdmin&&S.me.approved);
+  S.mode=S.me&&S.me.approved?"app":"pending";render();
+}
+async function initSupabase(){
+  S.backend="supabase";
+  const mod=await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");
+  sb=mod.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey);
+  const {data:{session}}=await sb.auth.getSession();
+  sb.auth.onAuthStateChange((ev,s)=>{if(ev==="SIGNED_OUT"){S.mode="auth";S.uid=null;render()}else if(ev==="SIGNED_IN"&&s&&S.uid!==s.user.id){S.uid=s.user.id;startSb()}});
+  if(session){S.uid=session.user.id;startSb()}else{S.mode="auth";render()}
+}
+let sbChan=null,sbT=null;
+async function startSb(){
+  await sbReload();
+  if(!sbChan){sbChan=sb.channel("all").on("postgres_changes",{event:"*",schema:"public"},()=>{clearTimeout(sbT);sbT=setTimeout(sbReload,300)}).subscribe()}
+}
+// ---- claude db ----
+async function initClaude(db){
+  S.backend="claude";cdb=db;
+  try{const u=await claude.use("user");if(u&&u.can){const c=await u.can("data.write");if(c===false)S.readOnly=true}}catch(e){}
+  const ready={clients:false,team:false,tasks:false};
+  const timer=setTimeout(()=>{if(S.mode==="loading"){S.mode="app";S.slow=true;render()}},10000);
+  ["clients","team","tasks"].forEach(col=>{
+    db.collection(col).onSnapshot(snap=>{
+      S[col]=snap.docs.map(d=>({id:d.id,...d.data()}));
+      if(!snap.metadata.fromCache)ready[col]=true;
+      if(ready.clients&&ready.team&&ready.tasks){clearTimeout(timer);S.slow=false;S.mode="app"}
+      if(S.mode==="app")render();
+    },err=>{clearTimeout(timer);S.mode="app";S.err=err&&err.code;render()});
+  });
+}
+// ---- local demo ----
+function localSave(){try{localStorage.setItem("b_data",JSON.stringify({clients:S.clients,team:S.team,tasks:S.tasks}))}catch(e){}}
+function initLocal(){
+  S.backend="local";
+  let d=null;try{d=JSON.parse(localStorage.getItem("b_data")||"null")}catch(e){}
+  if(d){S.clients=d.clients||[];S.team=d.team||[];S.tasks=d.tasks||[]}
+  S.mode="app";render();
+}
+// ---- boot ----
+setTimeout(async()=>{
+  if(CFG.supabaseUrl&&CFG.supabaseAnonKey){try{await initSupabase()}catch(e){console.error(e);S.mode="app";S.err="sb";initLocal()}return}
+  let db=null;
+  if(window.claude&&window.claude.use){try{db=await window.claude.use("db")}catch(e){db=null}}
+  if(db)initClaude(db);else initLocal();
+},0);
+
+// ================= filtering =================
+function visibleTasks(){
+  const va=effViewAs();
+  return S.tasks.filter(t=>{
+    if(va&&va!=="all"&&t.assignee!==va)return false;
+    if(S.fClient!=="all"&&t.client!==S.fClient)return false;
+    if(S.fEmp!=="all"&&t.assignee!==S.fEmp)return false;
+    if(S.q&&!(t.title||"").toLowerCase().includes(S.q.toLowerCase()))return false;
+    return true;
+  });
+}
+function filtersHTML(withSearch){
+  const va=effViewAs();
+  return `${withSearch?`<input id="fq" placeholder="Search tasks..." value="${esc(S.q)}">`:""}
+    <select id="fc"><option value="all">All clients</option>${S.clients.map(c=>`<option value="${esc(c.id)}" ${S.fClient===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}</select>
+    ${va==="all"?`<select id="fe"><option value="all">Whole team</option>${S.team.map(e=>`<option value="${esc(e.id)}" ${S.fEmp===e.id?"selected":""}>${esc(e.name)}</option>`).join("")}</select>`:""}`;
+}
+function bindFilters(){
+  const fq=$("#fq"),fc=$("#fc"),fe=$("#fe");
+  if(fq)fq.oninput=()=>{S.q=fq.value;const pos=fq.selectionStart;render();const n=$("#fq");n.focus();n.setSelectionRange(pos,pos)};
+  if(fc)fc.onchange=()=>{S.fClient=fc.value;render()};
+  if(fe)fe.onchange=()=>{S.fEmp=fe.value;render()};
+}
+function page(){const h=location.hash.slice(1);return PAGES.some(p=>p[0]===h)?h:"dashboard"}
+window.addEventListener("hashchange",render);
+
+// ================= render =================
+function render(){
+  const root=$("#root");
+  if(S.mode==="loading"){return}
+  if(S.mode==="auth"){root.innerHTML=authHTML();bindAuth();return}
+  if(S.mode==="pending"){root.innerHTML=`<div class="auth">${WAVES}<div class="auth-box"><img src="${LOGO}" alt=""><h2>Hi ${esc(S.me?.name||"")} 👋</h2><p class="sub">Your account is created and waiting for admin approval. Once approved, your work will show up here.</p><button class="btn" id="logout">Log out</button></div></div>`;$("#logout").onclick=()=>sb.auth.signOut();return}
+  if(!$(".app")){
+    root.innerHTML=`<div class="app"><aside><div class="brand"><img src="${LOGO}" alt="Bouncers"></div><nav id="nav"></nav>
+      <div class="side-bottom"><div class="viewas" id="viewasBox"><label>View as</label><select id="viewAs"></select></div><div id="meBox"></div></div>${WAVES}</aside>
+      <main><div class="mobile-bar"><img src="${LOGO}" alt=""><select id="viewAsM"></select></div><div id="banner"></div><div id="view"></div></main></div>`;
+  }
+  const p=page();
+  $("#nav").innerHTML=PAGES.map(([k,n])=>`<a href="#${k}" class="${p===k?"active":""}">${ICONS[k]}<span>${n}</span></a>`).join("");
+  if(S.viewAs!=="all"&&!emp(S.viewAs))S.viewAs="all";
+  const opts=`<option value="all">Everyone (admin)</option>`+S.team.map(e=>`<option value="${esc(e.id)}" ${S.viewAs===e.id?"selected":""}>${esc(e.name)}</option>`).join("");
+  $("#viewasBox").style.display=lockedToMe()?"none":"";
+  $("#viewAsM").style.display=lockedToMe()?"none":"";
+  ["#viewAs","#viewAsM"].forEach(s=>{const el=$(s);el.innerHTML=opts;el.value=S.viewAs;el.onchange=()=>{S.viewAs=el.value;S.fEmp="all";try{localStorage.setItem("b_viewas",S.viewAs)}catch(e){};render()}});
+  $("#meBox").innerHTML=S.backend==="supabase"&&S.me?`<div class="me">${avatar(S.me)}<span class="ellip">${esc(S.me.name)}</span><button id="logout">Log out</button></div>`:"";
+  if($("#logout"))$("#logout").onclick=()=>sb.auth.signOut();
+
+  let b="";
+  if(S.backend==="local")b=`<div class="banner">Demo mode — data stays on this device only and isn't shared.</div>`;
+  if(S.slow)b+=`<div class="banner">Data is taking a while to load — what you see may be out of date.</div>`;
+  if(S.err)b+=`<div class="banner err">Can't reach the data right now. Try reopening the page in a bit.</div>`;
+  if(S.readOnly)b+=`<div class="banner">You have view-only access.</div>`;
+  if(!lockedToMe()&&S.viewAs!=="all"&&emp(S.viewAs))b+=`<div class="banner">You're viewing the portal as <b>${esc(emp(S.viewAs).name)}</b> would see it.</div>`;
+  if(S.isAdmin&&S.pending.length)b+=`<div class="banner">${S.pending.length} new account(s) waiting for your approval — <a href="#team" style="color:var(--blue);font-weight:700">Go to Team</a></div>`;
+  $("#banner").innerHTML=b;
+  ({dashboard:renderDash,tasks:renderTasks,calendar:renderCal,clients:renderClients,team:renderTeam})[p]();
+}
+function hdr(title,sub,actions){return`<div class="topbar"><div><h1>${title}</h1>${SPARK}${sub?`<div class="sub" style="margin-top:6px">${sub}</div>`:""}</div><div class="filters">${actions||""}</div></div>`}
+const addBtn=()=>S.readOnly?"":`<button class="btn primary" data-act="newTask">+ New task</button>`;
+
+function renderDash(){
+  const ts=visibleTasks(),t0=today(),wk=addDays(t0,7),va=effViewAs();
+  const open=ts.filter(t=>t.status!=="done"),late=open.filter(isLate);
+  const week=open.filter(t=>t.due&&t.due>=t0&&t.due<=wk),review=ts.filter(t=>t.status==="review");
+  const d=new Date(),h=d.getHours(),greet=h<12?"Good morning":h<18?"Good afternoon":"Good evening";
+  const who=va&&va!=="all"&&emp(va)?emp(va).name.split(" ")[0]:(S.me?S.me.name.split(" ")[0]:"");
+  const team=va==="all"?S.team:S.team.filter(e=>e.id===va);
+  const loadOf=e=>S.tasks.filter(t=>t.assignee===e.id&&t.status!=="done");
+  const maxLoad=Math.max(1,...team.map(e=>loadOf(e).length));
+  const upcoming=open.filter(t=>t.due&&t.due>=t0).sort((a,b)=>a.due.localeCompare(b.due));
+  const empty=!S.clients.length&&!S.team.length;
+  $("#view").innerHTML=hdr(`${greet}${who?", "+esc(who):""}`,`${DAYS[(d.getDay()+1)%7]}, ${fmtDate(t0)} ${d.getFullYear()} — give your brand a bounce`,addBtn())+
+  (empty?`<div class="card"><h3>Let's get started</h3><p class="sub">Add your team and clients first, then start assigning tasks.</p><div class="filters"><a class="btn primary" href="#team">Team</a><a class="btn" href="#clients">Clients</a></div></div>`:
+  `<div class="stats">
+    <div class="stat s1"><div class="n">${open.length}</div><div class="l">Open tasks</div></div>
+    <div class="stat s2"><div class="n">${late.length}</div><div class="l">Overdue</div></div>
+    <div class="stat"><div class="n">${week.length}</div><div class="l">Due this week</div></div>
+    <div class="stat"><div class="n" style="color:var(--ok)">${review.length}</div><div class="l">Waiting for review</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><h3>Overdue &amp; coming up</h3>
+      ${late.concat(upcoming.filter(u=>!late.includes(u))).slice(0,10).map(taskRow).join("")||'<div class="empty">No upcoming deadlines 🎉</div>'}
+    </div>
+    <div class="card"><h3>${va==="all"?"Team workload":"Your work by status"}</h3>
+      ${team.map(e=>{const mine=loadOf(e),l=mine.filter(isLate).length,seg=s=>mine.filter(t=>t.status===s).length;
+        return`<div class="load-row"><div class="ellip" style="display:flex;gap:6px;align-items:center">${avatar(e)}<span class="ellip">${esc(e.name)}</span></div>
+        <div class="bar"><span style="width:${seg("todo")/maxLoad*100}%;background:var(--gold)"></span><span style="width:${seg("doing")/maxLoad*100}%;background:var(--blue)"></span><span style="width:${seg("review")/maxLoad*100}%;background:var(--ok)"></span></div>
+        <b style="text-align:left" class="display">${mine.length}${l?`<span style="color:var(--bad);font-size:12px"> (${l})</span>`:""}</b></div>`}).join("")||'<div class="empty">No team members yet</div>'}
+      <div class="sub" style="display:flex;gap:14px;margin-top:6px;flex-wrap:wrap"><span><span class="dot" style="display:inline-block;background:var(--gold)"></span> To do</span><span><span class="dot" style="display:inline-block;background:var(--blue)"></span> In progress</span><span><span class="dot" style="display:inline-block;background:var(--ok)"></span> Review</span><span style="color:var(--bad)">(overdue)</span></div>
+    </div>
+  </div>`);
+}
+function taskRow(t){
+  const c=client(t.client),e=emp(t.assignee);
+  return`<div class="list-item" data-task="${esc(t.id)}"><span class="dot" style="background:${esc(c?.color||"#ccc")}"></span>
+  <div class="grow"><div class="ellip" style="font-weight:700">${esc(t.title)}</div><div class="sub ellip">${esc(c?.name||"No client")} · ${esc(STATUS_NAME[t.status]||"")}</div></div>
+  ${isLate(t)?`<span class="pill late">Overdue</span>`:`<span class="pill">${fmtDate(t.due)}</span>`}${avatar(e)}</div>`;
+}
+
+function renderTasks(){
+  const ts=visibleTasks();
+  $("#view").innerHTML=hdr("Tasks","Drag a card between columns to change its status",filtersHTML(true)+addBtn())+
+  `<div class="board">${STATUSES.map(([k,n])=>{
+    const list=ts.filter(t=>(t.status||"todo")===k).sort((a,b)=>(a.due||"9").localeCompare(b.due||"9"));
+    return`<div class="col" data-col="${k}"><div class="col-h"><span>${n}</span><span class="c">${list.length}</span></div>${list.map(tCard).join("")||'<div class="empty">Empty</div>'}</div>`}).join("")}</div>`;
+  bindFilters();
+  if(S.readOnly)return;
+  document.querySelectorAll(".tcard").forEach(el=>{el.draggable=true;
+    el.ondragstart=e=>{e.dataTransfer.setData("text/plain",el.dataset.task);el.classList.add("dragging")};
+    el.ondragend=()=>el.classList.remove("dragging")});
+  document.querySelectorAll(".col").forEach(col=>{
+    col.ondragover=e=>{e.preventDefault();col.classList.add("over")};
+    col.ondragleave=()=>col.classList.remove("over");
+    col.ondrop=e=>{e.preventDefault();col.classList.remove("over");setStatus(e.dataTransfer.getData("text/plain"),col.dataset.col)}});
+}
+function tCard(t){
+  const c=client(t.client),e=emp(t.assignee),i=STATUSES.findIndex(s=>s[0]===(t.status||"todo")),nxt=STATUSES[i+1];
+  return`<div class="tcard" data-task="${esc(t.id)}" style="--c:${esc(c?.color||"#ccc")}">
+    <div class="t">${esc(t.title)}</div>
+    <div class="meta"><span class="pill" style="color:${esc(c?.color||"#666")}">${esc(c?.name||"No client")}</span>
+    ${t.type?`<span class="pill soft">${esc(t.type)}</span>`:""}${t.platform?`<span class="pill soft">${esc(t.platform)}</span>`:""}
+    ${t.priority&&t.priority!=="normal"?`<span class="pill ${esc(t.priority)}">${esc(PRIO_NAME[t.priority])}</span>`:""}</div>
+    <div class="foot"><span style="display:flex;gap:6px;align-items:center">${avatar(e)}${isLate(t)?`<span class="pill late">Overdue · ${fmtDate(t.due)}</span>`:(t.due?fmtDate(t.due):"")}</span>
+    ${nxt&&!S.readOnly?`<button class="next" data-next="${esc(t.id)}" title="Move to ${nxt[1]}">${nxt[1]} →</button>`:""}</div></div>`;
+}
+async function setStatus(id,status){
+  const t=S.tasks.find(x=>x.id===id);if(!t||t.status===status)return;
+  if(await B.save("tasks",{...t,status,doneAt:status==="done"?today():null}))toast("Moved to "+STATUS_NAME[status]);
+}
+
+function renderCal(){
+  const now=new Date();if(S.calY==null){S.calY=now.getFullYear();S.calM=now.getMonth()}
+  const first=new Date(S.calY,S.calM,1),offset=(first.getDay()+1)%7,start=new Date(S.calY,S.calM,1-offset);
+  const ts=visibleTasks(),t0=today();let cells="";
+  for(let i=0;i<42;i++){
+    const d=new Date(start);d.setDate(start.getDate()+i);const ds=ymd(d);
+    if(i>=35&&d.getMonth()!==S.calM)break;
+    const dayT=ts.filter(t=>t.due===ds);
+    cells+=`<div class="day ${d.getMonth()!==S.calM?"out":""} ${ds===t0?"today":""}" data-day="${ds}"><div class="num">${d.getDate()}</div>
+      ${dayT.slice(0,4).map(t=>{const c=client(t.client);return`<div class="chip ${t.status==="done"?"done":""}" data-task="${esc(t.id)}" style="background:${esc(c?.color||"#999")}" title="${esc(t.title)} — ${esc(emp(t.assignee)?.name||"")}">${esc(t.title)}</div>`}).join("")}
+      ${dayT.length>4?`<div class="more">+${dayT.length-4} more</div>`:""}</div>`;
+  }
+  $("#view").innerHTML=hdr("Calendar","Click any day to add a task on it",filtersHTML(false)+addBtn())+
+  `<div class="card"><div class="cal-head"><button class="btn sm" id="cp">←</button><h2>${MONTHS[S.calM]} ${S.calY}</h2><button class="btn sm" id="cn">→</button><button class="btn sm yellow" id="ct">Today</button>
+  <div class="filters" style="margin-inline-start:auto">${S.clients.slice(0,8).map(c=>`<span class="pill" style="color:${esc(c.color)}"><span class="dot" style="background:${esc(c.color)};width:9px;height:9px"></span>${esc(c.name)}</span>`).join("")}</div></div>
+  <div class="cal">${DAYS.map(d=>`<div class="dn">${d}</div>`).join("")}${cells}</div></div>`;
+  bindFilters();
+  $("#cp").onclick=()=>{S.calM--;if(S.calM<0){S.calM=11;S.calY--}render()};
+  $("#cn").onclick=()=>{S.calM++;if(S.calM>11){S.calM=0;S.calY++}render()};
+  $("#ct").onclick=()=>{S.calY=now.getFullYear();S.calM=now.getMonth();render()};
+}
+
+function renderClients(){
+  const va=effViewAs();
+  const list=va==="all"?S.clients:S.clients.filter(c=>c.manager===va||S.tasks.some(t=>t.client===c.id&&t.assignee===va));
+  const canEditClients=S.isAdmin&&!S.readOnly;
+  $("#view").innerHTML=hdr("Clients",`${list.length} client${list.length===1?"":"s"}`,canEditClients?`<button class="btn primary" data-act="newClient">+ New client</button>`:"")+
+  (list.length?`<div class="cards">${list.map(c=>{
+    const ts=S.tasks.filter(t=>t.client===c.id),open=ts.filter(t=>t.status!=="done"),m=emp(c.manager),lt=open.filter(isLate).length;
+    return`<div class="ent" style="--c:${esc(c.color)}"><h3 style="color:${esc(c.color)}">${esc(c.name)}</h3>
+    ${c.package?`<div class="sub">${esc(c.package)}</div>`:""}
+    <div class="tags">${(c.platforms||[]).map(p=>`<span class="pill">${esc(p)}</span>`).join("")}</div>
+    <div class="row"><span>Account manager</span><span style="display:flex;gap:5px;align-items:center">${m?avatar(m)+esc(m.name):"—"}</span></div>
+    <div class="row"><span>Open tasks</span><b>${open.length}${lt?` <span style="color:var(--bad)">(${lt} overdue)</span>`:""}</b></div>
+    ${c.notes?`<div class="sub" style="margin-top:8px">${esc(c.notes)}</div>`:""}
+    <div class="acts"><button class="btn sm" data-filter-client="${esc(c.id)}">Tasks</button><button class="btn sm" data-cal-client="${esc(c.id)}">Calendar</button>${canEditClients?`<button class="btn sm yellow" data-edit-client="${esc(c.id)}">Edit</button>`:""}</div></div>`}).join("")}</div>`
+  :`<div class="card empty">No clients yet.</div>`);
+}
+
+function renderTeam(){
+  const hasDemo=S.backend!=="supabase"&&[...S.clients,...S.team,...S.tasks].some(x=>x.demo);
+  const canEdit=S.isAdmin&&!S.readOnly;
+  $("#view").innerHTML=hdr("Team",`${S.team.length} member${S.team.length===1?"":"s"}`,(hasDemo&&canEdit?`<button class="btn danger" data-act="clearDemo">Clear demo data</button>`:"")+(canEdit?`<button class="btn primary" data-act="newEmp">+ Add member</button>`:""))+
+  (S.isAdmin&&S.pending.length?`<div class="section-t">Waiting for your approval</div><div class="cards">${S.pending.map(e=>`<div class="ent" style="--c:var(--gold)"><h3>${esc(e.name)}</h3><div class="sub">${esc(e.email||"")}</div>
+    <div class="acts"><button class="btn sm primary" data-approve="${esc(e.id)}">Approve</button></div></div>`).join("")}</div><div class="section-t">Team</div>`:"")+
+  (S.team.length?`<div class="cards">${S.team.map(e=>{
+    const mine=S.tasks.filter(t=>t.assignee===e.id),open=mine.filter(t=>t.status!=="done"),lt=open.filter(isLate).length;
+    const doneM=mine.filter(t=>t.status==="done"&&(t.doneAt||"").slice(0,7)===today().slice(0,7)).length;
+    const cl=[...new Set(open.map(t=>t.client))].map(client).filter(Boolean);
+    return`<div class="ent" style="--c:${esc(e.color)}"><div style="display:flex;gap:12px;align-items:center">${avatar(e,"big-av")}<div><h3>${esc(e.name)}</h3><div class="sub">${esc(e.role||"")}${e.isAdmin?" · Admin":""}</div></div></div>
+    <div class="row"><span>Open</span><b>${open.length}</b></div>
+    <div class="row"><span>Overdue</span><b style="color:${lt?"var(--bad)":"var(--ink)"}">${lt}</b></div>
+    <div class="row"><span>Delivered this month</span><b style="color:var(--ok)">${doneM}</b></div>
+    <div class="tags">${cl.map(c=>`<span class="pill" style="color:${esc(c.color)}">${esc(c.name)}</span>`).join("")}</div>
+    <div class="acts">${lockedToMe()?"":`<button class="btn sm" data-viewas="${esc(e.id)}">View their work</button>`}${canEdit?`<button class="btn sm yellow" data-edit-emp="${esc(e.id)}">Edit</button>`:""}</div></div>`}).join("")}</div>`
+  :`<div class="card empty">No team members yet.</div>`);
+}
+
+// ================= auth =================
+function authHTML(){
+  const su=S.authTab==="signup";
+  return`<div class="auth">${WAVES}<div class="auth-box"><img src="${LOGO}" alt="Bouncers"><h2>${su?"Create account":"Welcome back"}</h2>
+  <div class="sub">${su?"Sign up — an admin will approve your account":"Log in to see your work"}</div>
+  <form class="form" id="authForm">
+    ${su?`<div><label>Your name</label><input name="name" required></div>`:""}
+    <div><label>Email</label><input name="email" type="email" required></div>
+    <div><label>Password</label><input name="password" type="password" required minlength="6"></div>
+    <button class="btn primary" type="submit" style="margin-top:6px">${su?"Sign up":"Log in"}</button>
+  </form>
+  <div class="auth-tabs"><button class="btn sm" id="authSwitch" type="button">${su?"I already have an account":"Create an account"}</button></div>
+  <div class="sub" id="authMsg" style="margin-top:10px;min-height:20px"></div></div></div>`;
+}
+function bindAuth(){
+  $("#authSwitch").onclick=()=>{S.authTab=S.authTab==="login"?"signup":"login";render()};
+  $("#authForm").onsubmit=async e=>{
+    e.preventDefault();const f=Object.fromEntries(new FormData(e.target).entries());const msg=$("#authMsg");msg.textContent="One sec...";
+    if(S.authTab==="signup"){
+      const {data,error}=await sb.auth.signUp({email:f.email,password:f.password,options:{data:{name:f.name}}});
+      if(error){msg.textContent="Something went wrong: "+error.message;return}
+      if(!data.session)msg.textContent="Check your inbox to confirm your email, then log in.";
+    }else{
+      const {error}=await sb.auth.signInWithPassword({email:f.email,password:f.password});
+      if(error)msg.textContent="Wrong email or password";
+    }
+  };
+}
+
+// ================= modals =================
+function openModal(html,onBind){$("#modal").innerHTML=html;$("#modalBg").classList.add("open");onBind&&onBind()}
+function closeModal(){$("#modalBg").classList.remove("open")}
+$("#modalBg").addEventListener("mousedown",e=>{if(e.target.id==="modalBg")closeModal()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
+const sel=(name,opts,val,empty)=>`<select name="${name}">${empty?`<option value="">${empty}</option>`:""}${opts.map(o=>{const[v,l]=Array.isArray(o)?o:[o,o];return`<option value="${esc(v)}" ${v===val?"selected":""}>${esc(l)}</option>`}).join("")}</select>`;
+const formData=()=>Object.fromEntries(new FormData($("#modal form")).entries());
+const foot=(isNew,canDel,saveLbl)=>`<div class="modal-foot"><div>${canDel?`<button class="btn danger" id="mDel">${S.backend==="supabase"&&canDel==="team"?"Deactivate":"Delete"}</button>`:""}</div><div style="display:flex;gap:8px"><button class="btn" id="mCancel">Cancel</button>${saveLbl?`<button class="btn primary" id="mSave">${saveLbl}</button>`:""}</div></div>`;
+
+function taskModal(t,preset={}){
+  const isNew=!t,me=lockedToMe()?S.me.id:null;
+  t=t||{id:uid(),status:"todo",priority:"normal",due:preset.due||today(),client:preset.client||(S.fClient!=="all"?S.fClient:""),assignee:me||(S.viewAs!=="all"?S.viewAs:(S.fEmp!=="all"?S.fEmp:""))};
+  const ro=S.readOnly;
+  openModal(`<h2>${isNew?"New task":"Task details"}</h2><form class="form">
+    <div class="full"><label>Task title</label><input name="title" value="${esc(t.title||"")}" placeholder="e.g. Reel for the new offer"></div>
+    <div><label>Client</label>${sel("client",S.clients.map(c=>[c.id,c.name]),t.client,"Choose a client")}</div>
+    <div><label>Assigned to</label>${sel("assignee",S.team.map(e=>[e.id,e.name+(e.role?" — "+e.role:"")]),t.assignee,"Choose a team member")}</div>
+    <div><label>Type</label>${sel("type",TYPES,t.type||"","—")}</div>
+    <div><label>Platform</label>${sel("platform",PLATFORMS,t.platform||"","—")}</div>
+    <div><label>Deadline</label><input type="date" name="due" value="${esc(t.due||"")}"></div>
+    <div><label>Priority</label>${sel("priority",PRIORITIES,t.priority||"normal")}</div>
+    <div class="full"><label>Status</label>${sel("status",STATUSES,t.status||"todo")}</div>
+    <div class="full"><label>Notes / brief</label><textarea name="notes" placeholder="Caption, links, client feedback...">${esc(t.notes||"")}</textarea></div>
+  </form>${foot(isNew,!isNew&&!ro&&S.isAdmin,ro?"":(isNew?"Add task":"Save"))}`,()=>{
+    const form=$("#modal form");
+    if(ro)form.querySelectorAll("input,select,textarea").forEach(x=>x.disabled=true);
+    if(me)form.assignee.disabled=true;
+    $("#mCancel").onclick=closeModal;
+    $("#mSave")&&($("#mSave").onclick=async()=>{
+      const f=formData();if(!f.title.trim()){toast("Add a task title");return}
+      if(me)f.assignee=me;
+      const obj={...t,...f,title:f.title.trim(),updatedAt:new Date().toISOString()};
+      if(isNew)obj.createdAt=obj.updatedAt;
+      obj.doneAt=obj.status==="done"?(t.doneAt||today()):null;
+      if(await B.save("tasks",obj)){closeModal();toast(isNew?"Task added":"Saved")}
+    });
+    $("#mDel")&&($("#mDel").onclick=()=>confirmBox("Delete this task?",async()=>{if(await B.remove("tasks",t.id))toast("Deleted")}));
+  });
+}
+function swatchHTML(cur){return`<div class="swatches">${COLORS.map(c=>`<button type="button" data-sw="${c}" class="${c===cur?"sel":""}" style="background:${c}"></button>`).join("")}</div><input type="hidden" name="color" value="${esc(cur)}">`}
+function bindSwatches(){document.querySelectorAll("[data-sw]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-sw]").forEach(x=>x.classList.remove("sel"));b.classList.add("sel");$("#modal input[name=color]").value=b.dataset.sw})}
+
+function clientModal(c){
+  const isNew=!c;c=c||{id:uid(),color:COLORS[S.clients.length%COLORS.length],platforms:[]};
+  openModal(`<h2>${isNew?"New client":"Edit client"}</h2><form class="form">
+    <div class="full"><label>Client / brand name</label><input name="name" value="${esc(c.name||"")}"></div>
+    <div><label>Package</label><input name="package" value="${esc(c.package||"")}" placeholder="e.g. 12 posts + 8 reels / month"></div>
+    <div><label>Account manager</label>${sel("manager",S.team.map(e=>[e.id,e.name]),c.manager||"","—")}</div>
+    <div class="full"><label>Accounts</label><div class="checks">${PLATFORMS.map(p=>`<label><input type="checkbox" name="pf" value="${p}" ${(c.platforms||[]).includes(p)?"checked":""}>${p}</label>`).join("")}</div></div>
+    <div class="full"><label>Calendar color</label>${swatchHTML(c.color)}</div>
+    <div class="full"><label>Notes</label><textarea name="notes">${esc(c.notes||"")}</textarea></div>
+  </form>${foot(isNew,!isNew,"Save")}`,()=>{
+    bindSwatches();$("#mCancel").onclick=closeModal;
+    $("#mSave").onclick=async()=>{
+      const f=formData();if(!f.name.trim()){toast("Add the client name");return}
+      const pf=[...document.querySelectorAll("input[name=pf]:checked")].map(x=>x.value);delete f.pf;
+      if(await B.save("clients",{...c,...f,name:f.name.trim(),platforms:pf})){closeModal();toast("Saved")}
+    };
+    $("#mDel")&&($("#mDel").onclick=()=>{const n=S.tasks.filter(t=>t.client===c.id).length;
+      confirmBox(n?`This client has ${n} task(s) that will be deleted too. Continue?`:"Delete this client?",async()=>{
+        for(const t of S.tasks.filter(t=>t.client===c.id))await B.remove("tasks",t.id);
+        if(await B.remove("clients",c.id))toast("Deleted")})});
+  });
+}
+function empModal(e,approving){
+  const isNew=!e;e=e||{id:uid(),color:COLORS[(S.team.length+3)%COLORS.length]};
+  const sbm=S.backend==="supabase";
+  openModal(`<h2>${approving?"Approve "+esc(e.name):isNew?"New team member":"Edit "+esc(e.name)}</h2><form class="form">
+    <div><label>Name</label><input name="name" value="${esc(e.name||"")}"></div>
+    <div><label>Role</label><input name="role" list="roles" value="${esc(e.role||"")}"><datalist id="roles">${ROLES.map(r=>`<option value="${r}">`).join("")}</datalist></div>
+    <div class="full"><label>Color</label>${swatchHTML(e.color||COLORS[0])}</div>
+    ${sbm?`<div class="full checks"><label><input type="checkbox" name="isAdmin" ${e.isAdmin?"checked":""}> Admin — sees all tasks and can manage clients &amp; team</label></div>`:""}
+  </form>${foot(isNew,!isNew&&!approving&&e.id!==S.me?.id?"team":false,approving?"Approve":"Save")}`,()=>{
+    bindSwatches();$("#mCancel").onclick=closeModal;
+    $("#mSave").onclick=async()=>{const f=formData();if(!f.name.trim()){toast("Add a name");return}
+      const obj={...e,...f,name:f.name.trim()};if(sbm){obj.isAdmin=!!f.isAdmin;obj.approved=true}
+      if(await B.save("team",obj)){closeModal();toast(approving?"Approved":"Saved")}};
+    $("#mDel")&&($("#mDel").onclick=()=>{const n=S.tasks.filter(t=>t.assignee===e.id&&t.status!=="done").length;
+      confirmBox((n?`They have ${n} open task(s) that will be left unassigned. `:"")+(sbm?"Their account will be deactivated and they won't be able to log in.":"Remove them?"),async()=>{if(await B.remove("team",e.id))toast("Done")})});
+  });
+}
+function inviteModal(){
+  const link=location.origin+location.pathname;
+  openModal(`<h2>Add someone to the team</h2>
+  ${S.backend==="supabase"?`<p>Send them this link. They open it, click <b>"Create an account"</b> and sign up. They'll then show up on this Team page for you to approve.</p>
+  <div class="form"><div class="full"><input readonly dir="ltr" value="${esc(link)}" id="invLink"></div></div>
+  <div class="modal-foot"><span></span><div style="display:flex;gap:8px"><button class="btn" id="mCancel">Close</button><button class="btn primary" id="cpy">Copy link</button></div></div>`:""}`,()=>{
+    $("#mCancel").onclick=closeModal;
+    $("#cpy").onclick=async()=>{try{await navigator.clipboard.writeText(link);toast("Copied")}catch(e){$("#invLink").select();toast("Copy it from the box")}};
+  });
+}
+function confirmBox(msg,ok){
+  openModal(`<h2>Are you sure?</h2><p>${esc(msg)}</p><div class="modal-foot"><span></span><div style="display:flex;gap:8px"><button class="btn" id="cNo">No</button><button class="btn danger" id="cYes">Yes</button></div></div>`,()=>{
+    $("#cNo").onclick=closeModal;$("#cYes").onclick=async()=>{$("#cYes").disabled=true;await ok();closeModal()};
+  });
+}
+
+// ================= global clicks =================
+document.addEventListener("click",e=>{
+  const g=k=>e.target.closest(`[${k}]`);let el;
+  if(e.target.closest("#modal"))return;
+  if((el=g("data-next"))){e.stopPropagation();const t=S.tasks.find(x=>x.id===el.dataset.next);const i=STATUSES.findIndex(s=>s[0]===(t.status||"todo"));setStatus(t.id,STATUSES[i+1][0]);return}
+  if((el=g("data-task"))){taskModal(S.tasks.find(t=>t.id===el.dataset.task));return}
+  if((el=g("data-day"))){if(!S.readOnly&&S.clients.length&&S.team.length)taskModal(null,{due:el.dataset.day});return}
+  if((el=g("data-act"))){const a=el.dataset.act;
+    if(a==="newTask"){if(!S.clients.length||!S.team.length){toast("Add a client and a team member first");return}taskModal(null)}
+    if(a==="newClient")clientModal(null);
+    if(a==="newEmp")S.backend==="supabase"?inviteModal():empModal(null);
+    if(a==="clearDemo")confirmBox("This deletes all demo clients and tasks. Your team and anything you added stay.",async()=>{
+      for(const col of ["tasks","clients","team"])for(const x of S[col].filter(x=>x.demo))await B.remove(col,x.id);toast("Demo data cleared")});
+    return}
+  if((el=g("data-approve"))){empModal(S.pending.find(x=>x.id===el.dataset.approve),true);return}
+  if((el=g("data-edit-client"))){clientModal(client(el.dataset.editClient));return}
+  if((el=g("data-edit-emp"))){empModal(emp(el.dataset.editEmp));return}
+  if((el=g("data-filter-client"))){S.fClient=el.dataset.filterClient;location.hash="tasks";return}
+  if((el=g("data-cal-client"))){S.fClient=el.dataset.calClient;location.hash="calendar";return}
+  if((el=g("data-viewas"))){S.viewAs=el.dataset.viewas;try{localStorage.setItem("b_viewas",S.viewAs)}catch(_){};location.hash="dashboard";render();return}
+});
+</script>
+</body>
+</html>
