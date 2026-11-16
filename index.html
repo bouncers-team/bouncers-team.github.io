@@ -174,6 +174,19 @@ h1::after{content:"";position:absolute;left:0;right:20%;bottom:0;height:7px;bord
   .chip{font-size:10px}
   .mobile-bar{display:flex!important}
 }
+.bell{position:relative;display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;border-radius:16px;background:var(--navy);border:0;color:var(--cream);font-family:var(--display);font-weight:600;font-size:15px}
+.bell:hover{filter:brightness(1.15)}
+.bell svg{width:20px;height:20px}
+.bell .cnt{margin-inline-start:auto;background:var(--gold);color:var(--navy);border-radius:99px;padding:0 9px;font-size:13px;font-weight:800}
+.mbell{position:relative;border:0;background:var(--blue);color:var(--cream);width:42px;height:42px;border-radius:50%;display:grid;place-items:center;flex:none}
+.mbell svg{width:20px;height:20px}
+.mbell .cnt{position:absolute;top:-4px;right:-4px;background:var(--gold);color:var(--navy);border-radius:99px;padding:0 6px;font-size:11px;font-weight:800}
+.nlist{display:flex;flex-direction:column;gap:6px;max-height:60vh;overflow:auto;margin:6px 0}
+.nitem{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:14px;background:#fff;border:1.5px solid var(--line);cursor:pointer;text-align:left}
+.nitem.unread{border-color:var(--blue);background:#F2F4FF}
+.nitem .ic{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex:none;font-size:15px}
+.nitem .tt{font-weight:700}
+.nitem .tm{font-size:11.5px;color:var(--muted)}
 .mobile-bar{display:none;gap:8px;align-items:center;margin-bottom:14px}
 .mobile-bar img{width:44px}
 .mobile-bar select{flex:1;border:1.5px solid var(--line);border-radius:99px;padding:7px 12px;background:var(--panel)}
@@ -210,7 +223,7 @@ const PAGES=[["dashboard","Home"],["tasks","Tasks"],["calendar","Calendar"],["cl
 
 // ================= state =================
 const S={clients:[],team:[],pending:[],tasks:[],mode:"loading",backend:null,readOnly:false,isAdmin:true,me:null,
-  viewAs:"all",fClient:"all",fEmp:"all",q:"",calY:null,calM:null,authTab:"login",slow:false,err:null};
+  notifs:[],notifSeen:null,viewAs:"all",fClient:"all",fEmp:"all",q:"",calY:null,calM:null,authTab:"login",slow:false,err:null};
 try{S.viewAs=localStorage.getItem("b_viewas")||"all"}catch(e){}
 
 // ================= helpers =================
@@ -288,6 +301,8 @@ async function sbReload(){
   S.me=profs.find(x=>x.id===S.uid)||S.me;
   S.team=profs.filter(x=>x.approved);S.pending=profs.filter(x=>!x.approved);
   S.clients=c.data;S.tasks=t.data.map(r=>fromDb("tasks",r));
+  if(S.uid){const n=await sb.from("notifications").select("*").eq("user_id",S.uid).order("created_at",{ascending:false}).limit(60);
+    if(!n.error){const fresh=n.data.filter(x=>!x.read&&S.notifSeen&&!S.notifSeen.has(x.id));S.notifs=n.data;S.notifSeen=new Set(n.data.map(x=>x.id));fresh.forEach(pushNotif)}}
   S.isAdmin=!!(S.me&&S.me.isAdmin&&S.me.approved);
   S.mode=S.me&&S.me.approved?"app":"pending";render();
 }
@@ -335,6 +350,34 @@ setTimeout(async()=>{
   if(db)initClaude(db);else initLocal();
 },0);
 
+// ================= notifications =================
+const BELL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
+const NK={assigned:["📌","#E8ECFF"],urgent:["🔥","#FDE3DF"],review:["👀","#E3F6EE"],overdue:["⏰","#FDE3DF"],due:["📅","#FFF6CC"]};
+const unreadCount=()=>S.notifs.filter(n=>!n.read).length;
+function ago(ts){const s=(Date.now()-new Date(ts))/1000;if(s<60)return"just now";if(s<3600)return Math.floor(s/60)+"m ago";if(s<86400)return Math.floor(s/3600)+"h ago";return Math.floor(s/86400)+"d ago"}
+function pushNotif(n){
+  toast((NK[n.kind]||["🔔"])[0]+" "+n.title);
+  try{if("Notification" in window&&Notification.permission==="granted"){const x=new Notification(n.title,{body:n.body||"",icon:LOGO,tag:n.id});x.onclick=()=>{window.focus();openNotif(n.id)}}}catch(e){}
+}
+async function openNotif(id){
+  const n=S.notifs.find(x=>x.id===id);if(!n)return;
+  if(!n.read){n.read=true;sb.from("notifications").update({read:true}).eq("id",id).then(()=>{});render()}
+  const t=S.tasks.find(x=>x.id===n.task_id);closeModal();if(t)setTimeout(()=>taskModal(t),50);else toast("This task is no longer available");
+}
+function notifModal(){
+  const perm=("Notification" in window)?Notification.permission:"unsupported";
+  openModal(`<h2>Notifications</h2>
+  ${perm==="default"?`<div class="banner" style="display:flex;gap:10px;align-items:center;justify-content:space-between"><span>Get alerts on this device even when you're on another tab.</span><button class="btn sm primary" id="nPerm">Turn on</button></div>`:""}
+  ${perm==="denied"?`<div class="banner">Alerts are blocked in this browser. Allow notifications for this site in your browser settings to get them.</div>`:""}
+  <div class="nlist">${S.notifs.length?S.notifs.map(n=>{const k=NK[n.kind]||["🔔","#eee"];return`<button class="nitem ${n.read?"":"unread"}" data-nid="${esc(n.id)}"><span class="ic" style="background:${k[1]}">${k[0]}</span><span class="grow"><div class="tt">${esc(n.title)}</div><div class="sub">${esc(n.body||"")}</div><div class="tm">${ago(n.created_at)}</div></span></button>`}).join(""):'<div class="empty">No notifications yet</div>'}</div>
+  <div class="modal-foot"><button class="btn" id="nAll" ${unreadCount()?"":"disabled"}>Mark all as read</button><button class="btn primary" id="mCancel">Close</button></div>`,()=>{
+    $("#mCancel").onclick=closeModal;
+    document.querySelectorAll("[data-nid]").forEach(b=>b.onclick=()=>openNotif(b.dataset.nid));
+    $("#nPerm")&&($("#nPerm").onclick=async()=>{try{await Notification.requestPermission()}catch(e){};notifModal()});
+    $("#nAll").onclick=async()=>{S.notifs.forEach(n=>n.read=true);await sb.from("notifications").update({read:true}).eq("user_id",S.uid).eq("read",false);render();notifModal()};
+  });
+}
+
 // ================= filtering =================
 function visibleTasks(){
   const va=effViewAs();
@@ -369,8 +412,8 @@ function render(){
   if(S.mode==="pending"){root.innerHTML=`<div class="auth">${WAVES}<div class="auth-box"><img src="${LOGO}" alt=""><h2>Hi ${esc(S.me?.name||"")} 👋</h2><p class="sub">Your account is created and waiting for admin approval. Once approved, your work will show up here.</p><button class="btn" id="logout">Log out</button></div></div>`;$("#logout").onclick=()=>sb.auth.signOut();return}
   if(!$(".app")){
     root.innerHTML=`<div class="app"><aside><div class="brand"><img src="${LOGO}" alt="Bouncers"></div><nav id="nav"></nav>
-      <div class="side-bottom"><div class="viewas" id="viewasBox"><label>View as</label><select id="viewAs"></select></div><div id="meBox"></div></div>${WAVES}</aside>
-      <main><div class="mobile-bar"><img src="${LOGO}" alt=""><select id="viewAsM"></select></div><div id="banner"></div><div id="view"></div></main></div>`;
+      <div class="side-bottom"><div id="bellBox"></div><div class="viewas" id="viewasBox"><label>View as</label><select id="viewAs"></select></div><div id="meBox"></div></div>${WAVES}</aside>
+      <main><div class="mobile-bar"><img src="${LOGO}" alt=""><select id="viewAsM"></select><span id="mbellBox"></span></div><div id="banner"></div><div id="view"></div></main></div>`;
   }
   const p=page();
   $("#nav").innerHTML=PAGES.map(([k,n])=>`<a href="#${k}" class="${p===k?"active":""}">${ICONS[k]}<span>${n}</span></a>`).join("");
@@ -381,6 +424,10 @@ function render(){
   ["#viewAs","#viewAsM"].forEach(s=>{const el=$(s);el.innerHTML=opts;el.value=S.viewAs;el.onchange=()=>{S.viewAs=el.value;S.fEmp="all";try{localStorage.setItem("b_viewas",S.viewAs)}catch(e){};render()}});
   $("#meBox").innerHTML=S.backend==="supabase"&&S.me?`<div class="me">${avatar(S.me)}<span class="ellip">${esc(S.me.name)}</span><button id="logout">Log out</button></div>`:"";
   if($("#logout"))$("#logout").onclick=()=>sb.auth.signOut();
+  const uc=unreadCount(),hasN=S.backend==="supabase"&&S.me;
+  $("#bellBox").innerHTML=hasN?`<button class="bell" data-act="notifs">${BELL}<span>Notifications</span>${uc?`<span class="cnt">${uc}</span>`:""}</button>`:"";
+  $("#mbellBox").innerHTML=hasN?`<button class="mbell" data-act="notifs" aria-label="Notifications">${BELL}${uc?`<span class="cnt">${uc}</span>`:""}</button>`:"";
+  document.title=(uc?`(${uc}) `:"")+"Bouncers — Team Portal";
 
   let b="";
   if(S.backend==="local")b=`<div class="banner">Demo mode — data stays on this device only and isn't shared.</div>`;
@@ -658,6 +705,7 @@ document.addEventListener("click",e=>{
   if((el=g("data-day"))){if(!S.readOnly&&S.clients.length&&S.team.length)taskModal(null,{due:el.dataset.day});return}
   if((el=g("data-act"))){const a=el.dataset.act;
     if(a==="newTask"){if(!S.clients.length||!S.team.length){toast("Add a client and a team member first");return}taskModal(null)}
+    if(a==="notifs")notifModal();
     if(a==="newClient")clientModal(null);
     if(a==="newEmp")S.backend==="supabase"?inviteModal():empModal(null);
     if(a==="clearDemo")confirmBox("This deletes all demo clients and tasks. Your team and anything you added stay.",async()=>{
